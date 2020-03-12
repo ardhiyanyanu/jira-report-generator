@@ -4,63 +4,24 @@ const moment = require('moment');
 const username = 'ardian@alterra.id';
 const password = '';
 const project = 'INV';
-const sub_project = 'regina';
+const sub_project = 'dbs';
 
 const datesAreOnSameDay = (first, second) =>
     first.getFullYear() === second.getFullYear() &&
     first.getMonth() === second.getMonth() &&
     first.getDate() === second.getDate();
 
-const calculateBusinessDays = (firstDate, secondDate) => {
-  // EDIT : use of startOf
-  let day1 = moment(firstDate).startOf('day');
-  let day2 = moment(secondDate).startOf('day');
-  // EDIT : start at 1
-  let adjust = 1;
-
-  if((day1.dayOfYear() === day2.dayOfYear()) && (day1.year() === day2.year())){
-      return 0;
+const calculateBusinessHours = (firstDate, secondDate) => {
+  let m = moment(firstDate);
+  let roundUp = m.minute() || m.second() || m.millisecond() ? m.add(1, 'hour').startOf('hour') : m.startOf('hour');
+  let hourWork = 0;
+  while (!roundUp.isAfter(moment(secondDate))) {
+    roundUp.add(1, 'hours')
+    if(roundUp.get('hour') <= 18 && roundUp.get('hour') >= 9 && roundUp.weekday() > 0 && roundUp.weekday() < 6) {
+      hourWork += 1;
+    }
   }
-
-  if(day2.isBefore(day1)){
-      const temp = day1;
-      day1 = day2;
-      day2 = temp;
-  }
-
-  //Check if first date starts on weekends
-  if(day1.day() === 6) { //Saturday
-      //Move date to next week monday
-      day1.day(8);
-  } else if(day1.day() === 0) { //Sunday
-      //Move date to current week monday
-      day1.day(1);
-  }
-
-  //Check if second date starts on weekends
-  if(day2.day() === 6) { //Saturday
-      //Move date to current week friday
-      day2.day(5);
-  } else if(day2.day() === 0) { //Sunday
-      //Move date to previous week friday
-      day2.day(-2);
-  }
-
-  const day1Week = day1.week();
-  let day2Week = day2.week();
-
-  //Check if two dates are in different week of the year
-  if(day1Week !== day2Week){
-      //Check if second date's year is different from first date's year
-      if (day2Week < day1Week){
-          day2Week += day1Week;
-      }
-      //Calculate adjust value to be substracted from difference between two dates
-      // EDIT: add rather than assign (+= rather than =)
-      adjust += -2 * (day2Week - day1Week);
-  }
-  
-  return day2.diff(day1, 'days') + adjust;
+  return hourWork
 }
 
 axios.get('https://alterra.atlassian.net/rest/api/2/search', {
@@ -102,18 +63,18 @@ axios.get('https://alterra.atlassian.net/rest/api/2/search', {
       })
     })
     
-    const currentCycleTime = calculateBusinessDays(startDate, endDate)
-    const currentLeadTime = calculateBusinessDays(testingFinish, endDate)
+    const currentCycleTime = calculateBusinessHours(startDate, endDate)
+    const currentLeadTime = calculateBusinessHours(testingFinish, endDate)
 
     totalCycleTime = totalCycleTime + currentCycleTime
     totalLeadTIme = totalLeadTIme + currentLeadTime
     count = count + 1
 
     // console.log(key, startDate, testingFinish, endDate)
-    console.log(key, 'cycle time', currentCycleTime, 'days, lead time', currentLeadTime, 'days')
+    console.log(key, `cycle time ${Math.floor(currentCycleTime/9)} days ${currentCycleTime % 9} hours, lead time ${Math.floor(currentLeadTime/9)} days ${currentLeadTime % 9} hours`)
   })
   console.log('------------------------------------------------------------------------------')
-  console.log('AVERAGE cycle time', (totalCycleTime/count), 'days, lead time', (totalLeadTIme/count), 'days\n\n')
+  console.log(`AVERAGE cycle time ${Math.floor((totalCycleTime/count)/9)} days ${Math.round((totalCycleTime/count) % 9)} hours, lead time ${Math.floor((totalLeadTIme/count)/9)} days ${Math.round((totalLeadTIme/count) % 9)} hours\n\n`)
 })
 .catch(function (error) {
   console.log(error);
@@ -148,16 +109,16 @@ axios.get('https://alterra.atlassian.net/rest/api/2/search', {
         })
       })
       
-      const currentTimeRestore = calculateBusinessDays(createdDate, endDate)
+      const currentTimeRestore = calculateBusinessHours(createdDate, endDate)
   
       totalTimeRestore = totalTimeRestore + currentTimeRestore
       count = count + 1
   
       // console.log(key, createdDate, endDate)
-      console.log(key, 'time to restore', currentTimeRestore, 'days')
+      console.log(key, `time to restore ${Math.floor(currentTimeRestore/9)} days ${currentTimeRestore % 9} hours`)
     })
     console.log('------------------------------------------------------------------------------')
-    console.log('AVERAGE time to restore', (totalTimeRestore/count), 'days\n\n')
+    console.log(`AVERAGE time to restore ${Math.floor((totalTimeRestore/count)/9)} days ${Math.round((totalTimeRestore/count) % 9)} hours\n\n`)
   })
   
   .catch(function (error) {
@@ -205,18 +166,18 @@ axios.get('https://alterra.atlassian.net/rest/api/2/search', {
         })
       })
       
-      const currentCycleTime = calculateBusinessDays(startDate, endDate)
-      const currentLeadTime = calculateBusinessDays(testingFinish, endDate)
+      const currentCycleTime = calculateBusinessHours(startDate, endDate)
+      const currentLeadTime = calculateBusinessHours(testingFinish, endDate)
   
       totalCycleTime = totalCycleTime + currentCycleTime
       totalLeadTIme = totalLeadTIme + currentLeadTime
       count = count + 1
   
       // console.log(key, startDate, testingFinish, endDate)
-      console.log(key, 'cycle time', currentCycleTime, 'days, lead time', currentLeadTime, 'days')
+      console.log(key, `cycle time ${Math.floor(currentCycleTime/9)} days ${currentCycleTime % 9} hours, lead time ${Math.floor(currentLeadTime/9)} days ${currentLeadTime % 9} hours`)
     })
     console.log('------------------------------------------------------------------------------')
-    console.log('AVERAGE cycle time', (totalCycleTime/count), 'days, lead time', (totalLeadTIme/count), 'days\n\n')
+    console.log(`AVERAGE cycle time ${Math.floor((totalCycleTime/count)/9)} days ${Math.round((totalCycleTime/count) % 9)} hours, lead time ${Math.floor((totalLeadTIme/count)/9)} days ${Math.round((totalLeadTIme/count) % 9)} hours\n\n`)
   })
   
   .catch(function (error) {
