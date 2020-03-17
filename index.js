@@ -1,10 +1,24 @@
 const axios = require("axios");
 const moment = require("moment");
+const parseArgv = require("minimist");
 
-const username = "ardian@alterra.id";
-const password = "";
-const project = "INV";
-const sub_project = "pvc";
+// Parse the argument
+const argv = parseArgv(process.argv.slice(2));
+const validateArgv = argv => {
+  return argv.username && argv.password && argv.project && argv.subProject;
+};
+
+// Validate required argument
+if (!validateArgv(argv)) {
+  console.log(
+    "Missing username or password or project or subProject arguments"
+  );
+  return false;
+}
+const username = argv.username;
+const password = argv.password;
+const project = argv.project;
+const sub_project = argv.subProject;
 
 const initialResult = {
   startDate: new Date(),
