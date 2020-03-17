@@ -1,9 +1,13 @@
-## JIRA Report Generator
+# JIRA Report Generator
 
 This project will collect issue from JIRA and calculate cycle time and lead time based on specific work flow.
 To use this input your email and api token in index.js to allow this code to connect to JIRA.
 
-Report Generated:
+## Example usage
+
+node index.js --username=your@email.com --password=xxx --project=INV --subProject=dbs
+
+## Report Generated
 
 ```
 JIRA REPORT
